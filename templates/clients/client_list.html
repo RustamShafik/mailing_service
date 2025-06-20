@@ -4,6 +4,9 @@
 
 {% block content %}
     <h2>Список клиентов</h2>
+
+    <a href="{% url 'client_add' %}" class="btn btn-success mb-3">Добавить клиента</a>
+
     <table class="table table-striped">
         <thead>
             <tr>
