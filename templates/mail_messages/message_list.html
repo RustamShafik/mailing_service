@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Список сообщений{% endblock %}
+
+{% block content %}
+    <h2>Список сообщений</h2>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Тема</th>
+                <th>Текст</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for message in messages %}
+                <tr>
+                    <td>{{ message.subject }}</td>
+                    <td>{{ message.body|truncatewords:15 }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="2">Пока нет сообщений.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
