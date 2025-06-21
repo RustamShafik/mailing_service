@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Добро пожаловать в сервис рассылок</h1>
+
+  <ul>
+    <li>Всего рассылок: {{ mailing_count }}</li>
+    <li>Активных рассылок: {{ active_mailing_count }}</li>
+    <li>Уникальных клиентов: {{ client_count }}</li>
+  </ul>
+
+  <h2>Последние попытки рассылки</h2>
+  <ul>
+    {% for attempt in latest_attempts %}
+      <li>
+        {{ attempt.timestamp }} — {{ attempt.status }} — {{ attempt.mailing }}
+      </li>
+    {% empty %}
+      <li>Попыток пока не было.</li>
+    {% endfor %}
+  </ul>
+{% endblock %}
