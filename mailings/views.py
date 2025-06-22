@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from .models import Mailing, Attempt
 from django.http import HttpResponse
 from clients.models import Client
+from django.contrib.auth.forms import UserCreationForm
 
 class MailingListView(ListView):
     model = Mailing
@@ -92,3 +93,7 @@ class HomeView(TemplateView):
         context['latest_attempts'] = Attempt.objects.order_by('-timestamp')[:5]  # 👈 добавили это
         return context
 
+class RegisterView(CreateView):
+    form_class = UserCreationForm
+    template_name = 'registration/register.html'
+    success_url = reverse_lazy('login')
