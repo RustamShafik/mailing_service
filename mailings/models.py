@@ -1,6 +1,7 @@
 from django.db import models
 from clients.models import Client
 from mail_messages.models import Message
+from django.conf import settings
 
 class Mailing(models.Model):
     STATUS_CHOICES = [
@@ -14,6 +15,12 @@ class Mailing(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='CREATED')
     message = models.ForeignKey(Message, on_delete=models.CASCADE)
     recipients = models.ManyToManyField(Client)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='mailings',
+        verbose_name="Пользователь"
+    )
 
     def __str__(self):
         return f"Рассылка {self.pk} ({self.status})"

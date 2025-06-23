@@ -2,6 +2,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, T
 from django.urls import reverse_lazy
 from django.views import View
 from django.db.models import Count
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib import messages
 from django.core.mail import send_mail
@@ -90,10 +91,32 @@ class HomeView(TemplateView):
         context['mailing_count'] = Mailing.objects.count()
         context['active_mailing_count'] = Mailing.objects.filter(status='Запущена').count()
         context['client_count'] = Client.objects.count()
-        context['latest_attempts'] = Attempt.objects.order_by('-timestamp')[:5]  # 👈 добавили это
+        context['latest_attempts'] = Attempt.objects.order_by('-timestamp')[:5]
         return context
 
 class RegisterView(CreateView):
     form_class = UserCreationForm
     template_name = 'registration/register.html'
     success_url = reverse_lazy('login')
+
+class StatisticsView(LoginRequiredMixin, TemplateView):
+    template_name = 'mailings/statistics.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        user_mailings = Mailing.objects.filter(user=user)
+
+        context['success_count'] = Attempt.objects.filter(
+            mailing__in=user_mailings, status='Успешно'
+        ).count()
+
+        context['fail_count'] = Attempt.objects.filter(
+            mailing__in=user_mailings, status='Не успешно'
+        ).count()
+
+        context['message_count'] = Attempt.objects.filter(
+            mailing__in=user_mailings, status='Успешно'
+        ).count()
+
+        return context
