@@ -8,34 +8,70 @@ from django.contrib import messages
 from django.core.mail import send_mail
 from .models import Mailing, Attempt
 from django.http import HttpResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from clients.models import Client
+from django.http import Http404
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
-class MailingListView(ListView):
+class MailingListView(LoginRequiredMixin, ListView):
     model = Mailing
     template_name = 'mailings/mailing_list.html'
     context_object_name = 'mailings'
 
-class MailingCreateView(CreateView):
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name='Менеджеры').exists():
+            return Mailing.objects.all()
+        return Mailing.objects.filter(user=user)
+
+class MailingCreateView(LoginRequiredMixin, CreateView):
     model = Mailing
     fields = ['start_time', 'end_time', 'status', 'message', 'recipients']
     template_name = 'mailings/mailing_form.html'
     success_url = reverse_lazy('mailing_list')
 
-class MailingUpdateView(UpdateView):
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
+
+class MailingUpdateView(LoginRequiredMixin, UpdateView):
     model = Mailing
     fields = ['start_time', 'end_time', 'status', 'message', 'recipients']
     template_name = 'mailings/mailing_form.html'
     success_url = reverse_lazy('mailing_list')
 
-class MailingDeleteView(DeleteView):
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name='Менеджеры').exists():
+            return Mailing.objects.none()  # менеджерам нельзя редактировать чужие рассылки
+        return Mailing.objects.filter(user=user)
+
+
+class MailingDeleteView(LoginRequiredMixin, DeleteView):
     model = Mailing
     template_name = 'mailings/mailing_confirm_delete.html'
     success_url = reverse_lazy('mailing_list')
 
-class SendMailingView(View):
+    def get_queryset(self):
+        user = self.request.user
+        if user.groups.filter(name='Менеджеры').exists():
+            return Mailing.objects.none()  # менеджерам нельзя удалять чужие рассылки
+        return Mailing.objects.filter(user=user)
+
+class SendMailingView(LoginRequiredMixin, View):
     def get(self, request, pk):
         mailing = get_object_or_404(Mailing, pk=pk)
+
+        user = request.user
+        # менеджерам запрещаем отправку чужих рассылок
+        if user.groups.filter(name='Менеджеры').exists():
+            raise Http404("Менеджерам запрещена ручная отправка рассылок.")
+
+        if mailing.user != user:
+            raise Http404("Нет доступа к этой рассылке.")
+
         recipients = mailing.recipients.all()
         success = True
         response_log = ""
@@ -60,7 +96,6 @@ class SendMailingView(View):
             server_response=response_log
         )
 
-        # Меняем статус рассылки, если была "Создана"
         if mailing.status == "Создана":
             mailing.status = "Запущена"
             mailing.save()
@@ -83,6 +118,7 @@ class AttemptListView(ListView):
     template_name = 'mailings/attempt_list.html'
     context_object_name = 'attempts'
 
+@method_decorator(cache_page(60 * 5), name='dispatch')  # кеш на 5 минут
 class HomeView(TemplateView):
     template_name = 'home.html'
 
