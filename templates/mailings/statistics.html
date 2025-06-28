@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container mt-4">
+    <h2>Статистика по вашим рассылкам</h2>
+    <ul class="list-group mt-3">
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Успешных попыток
+        <span class="badge bg-success rounded-pill">{{ success_count }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Неуспешных попыток
+        <span class="badge bg-danger rounded-pill">{{ fail_count }}</span>
+      </li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        Отправлено сообщений
+        <span class="badge bg-primary rounded-pill">{{ message_count }}</span>
+      </li>
+    </ul>
+    <a href="{% url 'mailing_list' %}" class="btn btn-secondary mt-3">Назад к рассылкам</a>
+  </div>
+{% endblock %}

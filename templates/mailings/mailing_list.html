@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Список рассылок</h1>
+  <a href="{% url 'mailing_create' %}">Создать новую рассылку</a>
+  <ul>
+    {% for mailing in mailings %}
+      <li>
+        <strong>Рассылка:</strong> с {{ mailing.start_time }} по {{ mailing.end_time }} —
+        <strong>Статус:</strong> {{ mailing.get_status_display }} —
+        <a href="{% url 'mailing_edit' mailing.pk %}">Редактировать</a> |
+        <a href="{% url 'mailing_delete' mailing.pk %}">Удалить</a> |
+        <a href="{% url 'send_mailing' mailing.pk %}">Отправить</a>
+
+        {% if mailing.attempts.exists %}
+          <br>
+          <em>Попытки отправки:</em>
+          <ul>
+            {% for attempt in mailing.attempts.all %}
+              <li>
+                {{ attempt.timestamp }} — {{ attempt.status }}<br>
+                Ответ сервера: {{ attempt.server_response|linebreaksbr }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <br><em>Попыток отправки ещё не было.</em>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+{% endblock %}
